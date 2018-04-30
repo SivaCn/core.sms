@@ -1,10 +1,12 @@
-#!/usr/bin/python
-
 import time
 import serial
 
+from core.utils.utils import Singleton
+
 
 class SMS(object):
+
+    __metaclass__ = Singleton
 
     def __init__(self, device_port, baudrate, timeout):
 
@@ -17,6 +19,11 @@ class SMS(object):
 
         if timeout:
             _params.update({'timeout': timeout})
+
+        import pdb; pdb.set_trace()
+        if getattr(self, 'port', None):
+            if self.port.isOpen():
+                self.close()
 
         self.port = serial.Serial(**_params)
 
@@ -50,7 +57,7 @@ class SMS(object):
             return True, response
         return False, response
 
-    def get_response(self, wait_time=10):
+    def get_response(self, wait_time=5):
 
         output = ''
 
@@ -60,16 +67,23 @@ class SMS(object):
 
         return output
 
+    def close(self):
+        self.port.close()
+
 
 class SendSMS(SMS):
 
-    def __init__(self, device_port=None, baudrate=None, timeout=5):
+    def __init__(self, device_port=None, baudrate=None, timeout=10):
         super(self.__class__, self).__init__(
             device_port=device_port, baudrate=baudrate, timeout=timeout
         )
 
     def send(self, message, recipient):
         import pdb; pdb.set_trace()
+
+        message = str(message)
+        recipient = str(recipient)
+
         result, response = self.does_gsm_device_work()
         if not result:
             print response
@@ -80,15 +94,18 @@ class SendSMS(SMS):
             print response
             raise Exception("Unable to set the GSM device on SMS mode.")
 
-        import pdb; pdb.set_trace()
         result, response = super(self.__class__, self).send(message, recipient)
         if not result:
             print response
             raise Exception("Unable to send SMS.")
 
 
-sim = SendSMS('/dev/ttyS0')
+def test_sms_send():
+    sim = SendSMS('/dev/ttyS0')
+    sim.send('HI chellakutty', '7406044415')
+    sim.close()
 
-sim.send('HI chellakutty', '9742398830')
 
-sim.close()
+if __name__ == '__main__':
+
+    test_sms_send()
