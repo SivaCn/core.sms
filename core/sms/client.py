@@ -1,12 +1,8 @@
 import time
 import serial
 
-from core.utils.utils import Singleton
-
 
 class SMS(object):
-
-    __metaclass__ = Singleton
 
     def __init__(self, device_port, baudrate, timeout):
 
@@ -20,7 +16,6 @@ class SMS(object):
         if timeout:
             _params.update({'timeout': timeout})
 
-        import pdb; pdb.set_trace()
         if getattr(self, 'port', None):
             if self.port.isOpen():
                 self.close()
@@ -57,13 +52,14 @@ class SMS(object):
             return True, response
         return False, response
 
-    def get_response(self, wait_time=5):
+    def get_response(self, wait_time=10):
 
         output = ''
 
         start_time = time.time()
-        while start_time + wait_time >= time.time():
+        while 'ok' not in output.lower() and (start_time + wait_time >= time.time()):
             output += self.port.readline()
+            print output
 
         return output
 
@@ -79,31 +75,44 @@ class SendSMS(SMS):
         )
 
     def send(self, message, recipient):
-        import pdb; pdb.set_trace()
 
         message = str(message)
         recipient = str(recipient)
 
-        result, response = self.does_gsm_device_work()
-        if not result:
-            print response
-            raise Exception("The Connected GSM Device is not working.")
+        response_flag = False
+        response_message = 'Not yet initiated'
 
-        result, respone = self.set_device_on_sms_mode()
-        if not result:
-            print response
-            raise Exception("Unable to set the GSM device on SMS mode.")
+        try:
+            result, response = self.does_gsm_device_work()
+            if not result:
+                raise Exception("The Connected GSM Device is not working.")
 
-        result, response = super(self.__class__, self).send(message, recipient)
-        if not result:
-            print response
-            raise Exception("Unable to send SMS.")
+            result, respone = self.set_device_on_sms_mode()
+            if not result:
+                raise Exception("Unable to set the GSM device on SMS mode.")
+
+            result, response = super(self.__class__, self).send(message, recipient)
+            if not result:
+                raise Exception("Unable to send SMS.")
+
+        except Exception as error:
+            response_flag = False
+            response_message = str(error)
+
+        else:
+            response_flag = True
+            response_message = None
+
+        self.close()
+
+        return response_flag, response_message
 
 
 def test_sms_send():
     sim = SendSMS('/dev/ttyS0')
-    sim.send('HI chellakutty', '7406044415')
+    response = sim.send('HI chellakutty', '7406044415')
     sim.close()
+    return response
 
 
 if __name__ == '__main__':
