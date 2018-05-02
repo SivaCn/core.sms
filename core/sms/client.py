@@ -59,7 +59,6 @@ class SMS(object):
         start_time = time.time()
         while 'ok' not in output.lower() and (start_time + wait_time >= time.time()):
             output += self.port.readline()
-            print output
 
         return output
 
