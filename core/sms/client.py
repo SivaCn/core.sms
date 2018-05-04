@@ -1,6 +1,8 @@
+
 import time
 import serial
 import argparse
+import multiprocessing
 
 
 class SMS(object):
@@ -108,7 +110,7 @@ class SendSMS(SMS):
         return response_flag, response_message
 
 
-def test_sms_send():
+def main():
 
     example_invocation = """This is a test utility to send SMS
 
@@ -148,6 +150,31 @@ def test_sms_send():
         cmd_args.number,
         '' if result else message
     )
+
+
+def test_sms_send():
+
+    # Start send sms as a process
+    p = multiprocessing.Process(target=main)
+    p.start()
+
+    # Wait for 20 seconds or until process finishes
+    p.join(20)
+
+    # If thread is still active
+    if p.is_alive():
+        print "sending SMS... [Failed]"
+        print "running... out of time..."
+        print
+        print "Killed semd_sms process [OK]"
+
+        # Terminate
+        p.terminate()
+        p.join()
+
+    else:
+        print "sending SMS... [Success]"
+        print
 
 
 if __name__ == '__main__':
