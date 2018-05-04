@@ -1,5 +1,6 @@
 import time
 import serial
+import argparse
 
 
 class SMS(object):
@@ -108,10 +109,45 @@ class SendSMS(SMS):
 
 
 def test_sms_send():
-    sim = SendSMS('/dev/ttyS0')
-    response = sim.send('HI chellakutty', '7406044415')
+
+    example_invocation = """This is a test utility to send SMS
+
+    Usage:
+        python client.py --port /dev/ttyS0 --message "Hello World" --number 99999 88888
+
+    """
+
+
+    parser = argparse.ArgumentParser(
+        description=example_invocation,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+
+    parser.add_argument('--port', '-p',
+                        required=True,
+                        help='serial port')
+
+    parser.add_argument('--message', '-m',
+                        required=True,
+                        help='Text message to be sent')
+
+    parser.add_argument('--number', '-n',
+                        required=True,
+                        help='mobile number to send SMS')
+
+
+    cmd_args = parser.parse_args()
+
+    sim = SendSMS(cmd_args.port)
+    result, message = sim.send(cmd_args.message, cmd_args.number)
     sim.close()
-    return response
+
+    _msg = '{} sms to {} {}'
+    return _msg.format(
+        'Successfully sent' if result else 'Failed to send',
+        cmd_args.number,
+        '' if result else message
+    )
 
 
 if __name__ == '__main__':

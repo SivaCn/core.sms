@@ -40,8 +40,8 @@ setup(
     install_requires=[],
 
     entry_points={
-        #'console_scripts': [
-        #    'db.init=core.db.load_schema:main',
-        #],
+        'console_scripts': [
+            'send_sms=core.sms.client:test_sms_send',
+        ],
     },
 )
